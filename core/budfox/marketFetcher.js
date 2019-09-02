@@ -22,8 +22,12 @@ const Fetcher = function(config) {
   if(!_.isObject(config))
     throw new Error('TradeFetcher expects a config');
 
-  const exchangeName = config.watch.exchange.toLowerCase();
-  const DataProvider = require(util.dirs().gekko + 'exchange/wrappers/' + exchangeName);
+  var exchangeName = config.watch.exchange.toLowerCase();
+  var indexCcxt = exchangeName.search('ccxt');
+  if(indexCcxt !== -1){
+    exchangeName = 'ccxt';
+  }
+  var DataProvider = require(util.dirs().gekko + 'exchanges/' + exchangeName);
   _.bindAll(this);
 
   // Create a public dataProvider object which can retrieve live
