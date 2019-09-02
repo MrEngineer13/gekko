@@ -4,6 +4,8 @@ var path = require('path');
 var fs = require('fs');
 var semver = require('semver');
 var program = require('commander');
+var retry = require('retry');
+var Errors = require('./error');
 
 var startTime = moment();
 
@@ -14,6 +16,19 @@ var _gekkoMode = false;
 var _gekkoEnv = false;
 
 var _args = false;
+
+var retryHelper = function(fn, options, callback) {
+  var operation = retry.operation(options);
+  operation.attempt(function(currentAttempt) {
+    fn(function(err, result) {
+      if (!(err instanceof Errors.AbortError) && operation.retry(err)) {
+        return;
+      }
+
+      callback(err ? err.message : null, result);
+    });
+  });
+}
 
 // helper functions
 var util = {
@@ -163,6 +178,19 @@ var util = {
   },
   getStartTime: function() {
     return startTime;
+  },
+  retry: function(fn, callback) {
+    var operation = {
+      retries: 5,
+      factor: 1.2,
+      minTimeout: 1 * 1000,
+      maxTimeout: 3 * 1000
+    };
+
+    retryHelper(fn, operation, callback);
+  },
+  retryCustom: function(options, fn, callback) {
+    retryHelper(fn, options, callback);
   },
 }
 
