@@ -8,10 +8,27 @@ const Checker = function() {
 }
 
 Checker.prototype.getExchangeCapabilities = function(slug) {
-  if(!fs.existsSync(__dirname + '/wrappers/' + slug + '.js'))
-    throw new errors.ExchangeError(`Gekko does not know the exchange "${slug}"`);
+  var capabilities;
 
-  return require('./wrappers/' + slug).getCapabilities();
+  var ccxtSlug = undefined;
+
+  if(_.isUndefined(slug)){
+     util.die(`Exchange is undefined`);
+  }
+
+  var indexCcxt = slug.search('ccxt');
+  if(indexCcxt !== -1){
+     ccxtSlug = slug.substr(5);
+     slug = 'ccxt';
+  }
+
+  if(!fs.existsSync(dirs.exchanges + slug + '.js'))
+    util.die(`Gekko does not know exchange "${slug}"`);
+
+  var Trader = require(dirs.exchanges + slug);
+  capabilities = Trader.getCapabilities(ccxtSlug);
+
+  return capabilities;
 }
 
 // check if the exchange is configured correctly for monitoring
